@@ -48,6 +48,8 @@ jobs:
             KC_DB_USERNAME=${{ secrets.DB_USERNAME }} \
             KC_DB_PASSWORD=${{ secrets.DB_PASSWORD }} \
             KC_HOSTNAME=${{ secrets.KEYCLOAK_HOSTNAME }} \
+            KC_PROXY=edge \
             KEYCLOAK_ADMIN=${{ secrets.KEYCLOAK_ADMIN }} \
             KEYCLOAK_ADMIN_PASSWORD=${{ secrets.KEYCLOAK_ADMIN_PASSWORD }} \
-          --args "start" "--optimized" "--proxy=edge"
+          --command "/opt/keycloak/bin/kc.sh" \
+          --args "start" "--optimized"
