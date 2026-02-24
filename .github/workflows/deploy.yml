@@ -37,12 +37,37 @@ jobs:
 
     - name: Deploy to Azure Container Apps
       run: |
+        # Enable system-assigned identity and configure ACR
+        az containerapp identity assign \
+          --name ${{ env.CONTAINER_APP_NAME }} \
+          --resource-group ${{ env.RESOURCE_GROUP }} \
+          --system-assigned
+        
+        # Get the Container App's principal ID
+        PRINCIPAL_ID=$(az containerapp identity show \
+          --name ${{ env.CONTAINER_APP_NAME }} \
+          --resource-group ${{ env.RESOURCE_GROUP }} \
+          --query principalId -o tsv)
+        
+        # Get ACR resource ID
+        ACR_ID=$(az acr show \
+          --name ${{ env.AZURE_CONTAINER_REGISTRY }} \
+          --query id -o tsv)
+        
+        # Grant AcrPull role to Container App identity
+        az role assignment create \
+          --assignee $PRINCIPAL_ID \
+          --role AcrPull \
+          --scope $ACR_ID
+        
+        # Configure registry
         az containerapp registry set \
           --name ${{ env.CONTAINER_APP_NAME }} \
           --resource-group ${{ env.RESOURCE_GROUP }} \
           --server ${{ env.AZURE_CONTAINER_REGISTRY }}.azurecr.io \
           --identity system
         
+        # Update container app
         az containerapp update \
           --name ${{ env.CONTAINER_APP_NAME }} \
           --resource-group ${{ env.RESOURCE_GROUP }} \
