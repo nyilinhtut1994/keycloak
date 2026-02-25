@@ -37,12 +37,6 @@ jobs:
 
     - name: Deploy to Azure Container Apps
       run: |
-        # Enable system-assigned identity
-        az containerapp identity assign \
-          --name ${{ env.CONTAINER_APP_NAME }} \
-          --resource-group ${{ env.RESOURCE_GROUP }} \
-          --system-assigned
-        
         # Configure registry with managed identity
         az containerapp registry set \
           --name ${{ env.CONTAINER_APP_NAME }} \
