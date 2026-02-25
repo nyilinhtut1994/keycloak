@@ -64,5 +64,4 @@ jobs:
             KC_HOSTNAME=${{ secrets.KEYCLOAK_HOSTNAME }} \
             KC_PROXY=edge \
             KEYCLOAK_ADMIN=${{ secrets.KEYCLOAK_ADMIN }} \
-            KEYCLOAK_ADMIN_PASSWORD=${{ secrets.KEYCLOAK_ADMIN_PASSWORD }} \
-          --command "/opt/keycloak/bin/kc.sh start --optimized"
+            KEYCLOAK_ADMIN_PASSWORD=${{ secrets.KEYCLOAK_ADMIN_PASSWORD }}
