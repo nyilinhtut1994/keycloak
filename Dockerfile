@@ -12,4 +12,4 @@ COPY --from=builder /opt/keycloak/ /opt/keycloak/
 # Azure Container Apps uses port 8080 by default
 EXPOSE 8080
 
-ENTRYPOINT ["/opt/keycloak/bin/kc.sh", "start", "--optimized", "--proxy=edge", "--hostname-strict=false"]
+ENTRYPOINT ["/opt/keycloak/bin/kc.sh", "start", "--optimized", "--hostname-strict=false"]
