@@ -1,14 +1,20 @@
 # Azure Portal Setup Guide for Keycloak Deployment
 
-## Step 1: Use Existing Resource Group
+## Step 1: Create Resource Group
 
-You'll use your existing resource group: `cmhl-preprod-rg`
+1. Go to Azure Portal (https://portal.azure.com)
+2. Search for "Resource groups" → Click "Create"
+3. Fill in:
+   - **Subscription**: Select your subscription
+   - **Resource group**: `keycloak-rg`
+   - **Region**: `East US` (or your preferred region)
+4. Click "Review + create" → "Create"
 
 ## Step 2: Create Azure Container Registry (ACR)
 
 1. Search for "Container registries" → Click "Create"
 2. Fill in:
-   - **Resource group**: `cmhl-preprod-rg`
+   - **Resource group**: `keycloak-rg`
    - **Registry name**: `keycloakacr` (must be globally unique, use your own name)
    - **Location**: Same as resource group
    - **SKU**: `Basic`
@@ -22,7 +28,7 @@ You'll use your existing resource group: `cmhl-preprod-rg`
 
 1. Search for "Azure Database for PostgreSQL flexible servers" → Click "Create"
 2. Fill in:
-   - **Resource group**: `cmhl-preprod-rg`
+   - **Resource group**: `keycloak-rg`
    - **Server name**: `keycloak-db` (must be globally unique)
    - **Region**: Same as resource group
    - **PostgreSQL version**: `15`
@@ -48,7 +54,7 @@ You'll use your existing resource group: `cmhl-preprod-rg`
 
 1. Search for "Container Apps" → Click "Create"
 2. On the "Basics" tab:
-   - **Resource group**: `cmhl-preprod-rg`
+   - **Resource group**: `keycloak-rg`
    - **Container app name**: `keycloak-app`
    - **Region**: Same as resource group
 3. Click "Create new" under "Container Apps Environment":
@@ -80,7 +86,7 @@ You'll use your existing resource group: `cmhl-preprod-rg`
 az ad sp create-for-rbac \
   --name "github-keycloak-deploy" \
   --role contributor \
-  --scopes /subscriptions/<subscription-id>/resourceGroups/cmhl-preprod-rg \
+  --scopes /subscriptions/<subscription-id>/resourceGroups/keycloak-rg \
   --sdk-auth
 ```
 3. Copy the entire JSON output (you'll add this to GitHub secrets)
@@ -110,8 +116,8 @@ az ad sp create-for-rbac \
 
 1. Edit `.github/workflows/deploy.yml`
 2. Replace these values:
-   - `<your-acr-name>`: `chkeycloakacr`
-   - `<your-resource-group>`: `cmhl-preprod-rg`
+   - `<your-acr-name>`: Your ACR name (e.g., `keycloakacr`)
+   - `<your-resource-group>`: `keycloak-rg`
 
 ## Step 8: Deploy
 
