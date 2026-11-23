@@ -19,10 +19,36 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Configure AWS credentials
+        id: aws-credentials
         uses: aws-actions/configure-aws-credentials@v6
         with:
           role-to-assume: ${{ vars.AWS_ROLE_ARN }}
           aws-region: ${{ vars.AWS_REGION }}
+          audience: sts.amazonaws.com
+
+      - name: Show GitHub OIDC claims after AWS authentication failure
+        if: ${{ failure() && steps.aws-credentials.outcome == 'failure' }}
+        run: |
+          python3 - <<'PY'
+          import base64
+          import json
+          import os
+          from urllib.parse import urlencode
+          from urllib.request import Request, urlopen
+
+          url = os.environ["ACTIONS_ID_TOKEN_REQUEST_URL"]
+          separator = "&" if "?" in url else "?"
+          query = urlencode({"audience": "sts.amazonaws.com"})
+          request = Request(f"{url}{separator}{query}", headers={
+              "Authorization": "Bearer " + os.environ["ACTIONS_ID_TOKEN_REQUEST_TOKEN"],
+              "Accept": "application/json",
+          })
+          with urlopen(request, timeout=15) as response:
+              token = json.load(response)["value"]
+          payload = token.split(".")[1]
+          claims = json.loads(base64.urlsafe_b64decode(payload + "=" * (-len(payload) % 4)))
+          print(json.dumps({claim: claims[claim] for claim in ("iss", "aud", "sub")}))
+          PY
 
       - name: Log in to Amazon ECR
         id: login-ecr
