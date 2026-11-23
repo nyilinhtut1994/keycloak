@@ -26,13 +26,19 @@ jobs:
           aws-region: ${{ vars.AWS_REGION }}
           audience: sts.amazonaws.com
 
-      - name: Show GitHub OIDC claims after AWS authentication failure
+      - name: Diagnose GitHub OIDC and AWS STS after authentication failure
         if: ${{ failure() && steps.aws-credentials.outcome == 'failure' }}
+        env:
+          AWS_ROLE_ARN: ${{ vars.AWS_ROLE_ARN }}
+          AWS_REGION: ${{ vars.AWS_REGION }}
         run: |
           python3 - <<'PY'
           import base64
           import json
           import os
+          import re
+          import xml.etree.ElementTree as ET
+          from urllib.error import HTTPError, URLError
           from urllib.parse import urlencode
           from urllib.request import Request, urlopen
 
@@ -48,6 +54,36 @@ jobs:
           payload = token.split(".")[1]
           claims = json.loads(base64.urlsafe_b64decode(payload + "=" * (-len(payload) % 4)))
           print(json.dumps({claim: claims[claim] for claim in ("iss", "aud", "sub")}))
+
+          region = os.environ["AWS_REGION"]
+          if not re.fullmatch(r"[a-z]{2}(?:-[a-z0-9]+)+-[0-9]+", region):
+              raise SystemExit("AWS_REGION is missing or malformed")
+          sts_body = urlencode({
+              "Action": "AssumeRoleWithWebIdentity",
+              "Version": "2011-06-15",
+              "RoleArn": os.environ["AWS_ROLE_ARN"],
+              "RoleSessionName": "GitHubActions",
+              "WebIdentityToken": token,
+              "DurationSeconds": 900,
+          }).encode()
+          for host in (f"sts.{region}.amazonaws.com", "sts.amazonaws.com"):
+              result = {"endpoint": host}
+              try:
+                  with urlopen(f"https://{host}/", data=sts_body, timeout=15) as response:
+                      result.update(status=response.status, request_id=response.headers.get("x-amzn-requestid"))
+              except HTTPError as error:
+                  result["status"] = error.code
+                  with error:
+                      try:
+                          aws_error = ET.fromstring(error.read())
+                      except ET.ParseError:
+                          pass
+                      else:
+                          result["error_code"] = aws_error.findtext(".//{*}Code")
+                          result["request_id"] = aws_error.findtext(".//{*}RequestId")
+              except (URLError, TimeoutError) as error:
+                  result["transport_error"] = type(error).__name__
+              print(json.dumps(result))
           PY
 
       - name: Log in to Amazon ECR
