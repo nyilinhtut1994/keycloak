@@ -1,6 +1,8 @@
 # Keycloak Service Deployment
 
-Automated Keycloak deployment to Azure Container Apps using GitHub Actions.
+The current GitHub Actions workflow publishes the Keycloak image to Amazon ECR. Follow the [AWS deployment guide](AWS_ECS_SETUP.md) to configure GitHub OIDC, publish the first image, and run it on ECS.
+
+The sections below document the previous Azure Container Apps setup.
 
 ## Prerequisites
 
