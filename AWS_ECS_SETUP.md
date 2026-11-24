@@ -123,12 +123,15 @@ The steps below use Linux on Fargate, PostgreSQL, and an Application Load Balanc
 
 For each Secrets Manager entry, add a container secret mapping with the environment variable name and the secret ARN or JSON key reference. After first startup, open `/admin` through the public hostname and create a permanent admin account. [ECS secret injection](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/secrets-envvar-secrets-manager.html) · [Keycloak database settings](https://www.keycloak.org/server/db) · [Keycloak reverse proxy settings](https://www.keycloak.org/server/reverseproxy) · [Keycloak container settings](https://www.keycloak.org/server/containers)
 
+### Enable SCIM provisioning
+
+The image includes Keycloak's built-in SCIM API for user and group provisioning. In the Keycloak Admin Console, select the target realm, go to **Realm settings → General**, turn on **SCIM API**, and save. Configure your provisioning client to use `https://<your-keycloak-hostname>/realms/<realm>/scim/v2` and an OAuth 2.0 access token from a confidential client with the required permissions. [Keycloak SCIM configuration](https://www.keycloak.org/docs/26.8.2/server_admin/#_scim-api)
+
 ## Troubleshooting
 
 | Symptom | What to check |
 | --- | --- |
 | GitHub fails to assume the IAM role | Check `AWS_ROLE_ARN`, the OIDC provider audience, and whether the role's `sub` pattern matches the repository's subject format for the selected branch. |
 | ECR push returns `AccessDenied` | Compare `AWS_REGION` and `ECR_REPOSITORY` with the configured repository. Check that the role policy allows uploads to its exact ARN. |
-| Docker build fails during the SCIM download | The [Dockerfile](Dockerfile) references SCIM `7.7.1` for Keycloak major version 26. The public release list does not show that asset. A `404` at the `curl` step requires a valid artifact compatible with the Keycloak base image before ECR publishing can succeed. [Public SCIM releases](https://github.com/Captain-P-Goldfish/scim-for-keycloak/releases) |
 | ECS cannot pull the image or read a secret | Check the image URI, task execution role, and subnet connectivity to ECR and Secrets Manager. Review the stopped task's reason in ECS. |
 | ECS starts the task but the ALB target is unhealthy | Check the health check path, target port, security groups, and Keycloak startup logs for database connection or configuration errors. |
