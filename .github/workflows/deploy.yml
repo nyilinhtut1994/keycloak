@@ -38,3 +38,10 @@ jobs:
           docker build --tag "$image" .
           docker push "$image"
           printf 'ECR image: `%s`\n' "$image" >> "$GITHUB_STEP_SUMMARY"
+
+          if [[ "$GITHUB_REF" == 'refs/heads/main' ]]; then
+            latest_image="$ECR_REGISTRY/$ECR_REPOSITORY:latest"
+            docker tag "$image" "$latest_image"
+            docker push "$latest_image"
+            printf 'ECR image for ECS: `%s`\n' "$latest_image" >> "$GITHUB_STEP_SUMMARY"
+          fi
